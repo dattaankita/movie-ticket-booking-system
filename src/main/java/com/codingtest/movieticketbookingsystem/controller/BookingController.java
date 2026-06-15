@@ -1,69 +1,58 @@
 package com.codingtest.movieticketbookingsystem.controller;
 
-import com.codingtest.movieticketbookingsystem.entity.Booking;
-import com.codingtest.movieticketbookingsystem.entity.Event;
-import com.codingtest.movieticketbookingsystem.repository.BookingRepository;
-import com.codingtest.movieticketbookingsystem.repository.EventRepository;
-import com.codingtest.movieticketbookingsystem.repository.SeatRepository;
+import com.codingtest.movieticketbookingsystem.common.dto.ApiResponse;
+import com.codingtest.movieticketbookingsystem.common.dto.PageResponse;
+import com.codingtest.movieticketbookingsystem.dto.booking.*;
+import com.codingtest.movieticketbookingsystem.security.SecurityUtils;
 import com.codingtest.movieticketbookingsystem.service.BookingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.codingtest.movieticketbookingsystem.service.CancellationService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-
 @RestController
-@RequestMapping("/api")
-class BookingController {
+@RequestMapping("/api/v1/bookings")
+@RequiredArgsConstructor
+public class BookingController {
 
-    @Autowired
-    private BookingService service;
-    @Autowired
-    private SeatRepository seatRepo;
-    @Autowired
-    private EventRepository eventRepo;
-    @Autowired
-    private BookingRepository bookingRepo;
+    public static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
 
-    @PostMapping("/holds")
-    public String hold(@RequestBody Map<String, Object> req) {
-        return service.holdSeats(Long.valueOf(req.get("eventId").toString()),
-                Long.valueOf(req.get("userId").toString()),
-                (List<Long>) req.get("seatIds"));
+    private final BookingService bookingService;
+    private final CancellationService cancellationService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<BookingResponse>> confirmBooking(
+            @Valid @RequestBody CreateBookingRequest request,
+            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey) {
+        Long userId = SecurityUtils.getCurrentUser().getId();
+        BookingConfirmationResult result = bookingService.confirmBooking(request, userId, idempotencyKey);
+
+        HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
+        String message = result.created() ? "Booking confirmed" : "Booking already confirmed";
+        return ResponseEntity.status(status).body(ApiResponse.ok(message, result.response()));
     }
 
-    @PostMapping("/bookings/confirm")
-    public String confirm(@RequestParam String holdId) {
-        service.confirmBooking(holdId);
-        return "CONFIRMED";
+    @GetMapping("/me")
+    public ApiResponse<PageResponse<BookingResponse>> myBookings(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Long userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok(bookingService.listMyBookings(userId, page, size));
     }
 
-    @PostMapping("/bookings/{id}/cancel")
-    public String cancel(@PathVariable Long id) {
-        service.cancelBooking(id);
-        return "CANCELLED";
+    @GetMapping("/{bookingId}")
+    public ApiResponse<BookingResponse> getBooking(@PathVariable Long bookingId) {
+        Long userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok(bookingService.getBooking(bookingId, userId));
     }
 
-    @GetMapping("/bookings/{id}")
-    public Booking view(@PathVariable Long id) {
-        return bookingRepo.findById(id).orElseThrow();
-    }
-
-    // AVAILABILITY
-    @GetMapping("/events/{eventId}/availability")
-    public Map<String, Object> availability(@PathVariable Long eventId) {
-
-        Event e = eventRepo.findById(eventId).orElseThrow();
-
-        long booked = seatRepo.countByEventIdAndBookedTrue(eventId);
-        long held = seatRepo.countByEventIdAndHeldTrue(eventId);
-
-        long available = e.getTotalSeats() - (booked + held);
-
-        return Map.of("eventId", eventId,
-                "totalSeats", e.getTotalSeats(),
-                "booked", booked,
-                "held", held,
-                "available", available);
+    @PostMapping("/{bookingId}/cancel")
+    public ApiResponse<CancelBookingResponse> cancelBooking(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody(required = false) CancelBookingRequest request) {
+        Long userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok("Booking cancelled", cancellationService.cancelBooking(bookingId, userId, request));
     }
 }
