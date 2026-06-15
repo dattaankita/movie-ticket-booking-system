@@ -117,7 +117,7 @@ public class BrowseService {
         }));
     }
 
-    Show findShow(Long showId) {
+    public Show findShow(Long showId) {
         return showRepository.findByIdWithDetails(showId)
                 .orElseThrow(() -> new ResourceNotFoundException("Show", showId));
     }
