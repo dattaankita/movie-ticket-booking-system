@@ -4,6 +4,7 @@ import com.codingtest.movieticketbookingsystem.common.enums.HoldStatus;
 import com.codingtest.movieticketbookingsystem.config.BookingProperties;
 import com.codingtest.movieticketbookingsystem.domain.hold.SeatHold;
 import com.codingtest.movieticketbookingsystem.repository.SeatHoldRepository;
+import com.codingtest.movieticketbookingsystem.service.HoldExpiryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
