@@ -3,6 +3,7 @@ package com.codingtest.movieticketbookingsystem;
 import com.codingtest.movieticketbookingsystem.common.enums.PaymentStatus;
 import com.codingtest.movieticketbookingsystem.config.BookingProperties;
 import com.codingtest.movieticketbookingsystem.domain.booking.Booking;
+import com.codingtest.movieticketbookingsystem.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)

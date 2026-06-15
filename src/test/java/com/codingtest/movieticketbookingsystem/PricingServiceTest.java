@@ -6,6 +6,7 @@ import com.codingtest.movieticketbookingsystem.domain.pricing.PricingTier;
 import com.codingtest.movieticketbookingsystem.domain.seat.Seat;
 import com.codingtest.movieticketbookingsystem.domain.show.Show;
 import com.codingtest.movieticketbookingsystem.repository.PricingTierRepository;
+import com.codingtest.movieticketbookingsystem.service.PricingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
